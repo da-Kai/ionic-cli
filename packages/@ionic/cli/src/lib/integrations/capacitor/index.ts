@@ -187,6 +187,7 @@ export class Integration extends BaseIntegration<ProjectIntegration> {
   });
 
   getCapacitorCLIConfig = lodash.memoize(async (): Promise<CapacitorCLIConfig | undefined> => {
+    const command = 'capacitor'
     const args = ['config', '--json'];
 
     debug('Getting config with Capacitor CLI: %O', args);
@@ -201,10 +202,13 @@ export class Integration extends BaseIntegration<ProjectIntegration> {
         } catch (err) {
           throw err;
         }
-      })('capacitor', args, { cwd: this.root })
+      })(command, args, { cwd: this.root })
     } catch (error) {
       if ((error as any).code === 'ERR_SUBPROCESS_COMMAND_NOT_FOUND') {
         throw new Error(`Capacitor command not found. Is the Capacitor CLI installed? (npm i -D @capacitor/cli)`);
+      } else if ((error as any).output) {
+        const errorLog = "\n> " + ((error as any).output as string).replaceAll("\n", "\n> ");
+        throw new Error(`'${command} ${args.join(" ")}' failed with: ${errorLog}`);
       } else {
         throw new Error((error as any).message);
       }
